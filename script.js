@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const roundBadge = document.getElementById('round-badge');
     const roundInfo = document.getElementById('round-info');
     const totalQuestionsEl = document.getElementById('total-questions');
+    const midtermStartBtn = document.getElementById('midterm-start-btn');
+    const midtermCountEl = document.getElementById('midterm-count');
 
     // Shared quiz elements
     const nextBtn = document.getElementById('next-btn');
@@ -40,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===== STATE =====
     let allQuestions = [];
     let topicQuestions = [];
+    let midtermQuestions = [];
     let selectedQuestions = [];
     let currentQuestionIndex = 0;
     let score = 0;
@@ -47,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let secondsElapsed = 0;
     let isAnswered = false;
 
-    // Quiz mode: 'basic' or 'topic'
+    // Quiz mode: 'basic', 'topic', or 'midterm'
     let quizMode = 'basic';
     let activeTab = 'basic';
     let currentTopicTitle = '';
@@ -177,6 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.topicQuestionBankData) {
             topicQuestions = parseMarkdown(window.topicQuestionBankData);
             console.log(`Loaded ${topicQuestions.length} topic questions.`);
+        }
+        if (window.midtermQuestionBankData) {
+            midtermQuestions = parseMarkdown(window.midtermQuestionBankData);
+            console.log(`Loaded ${midtermQuestions.length} midterm questions.`);
+            if (midtermCountEl) midtermCountEl.textContent = midtermQuestions.length;
         }
     }
 
@@ -377,6 +385,15 @@ document.addEventListener('DOMContentLoaded', () => {
         beginQuiz(subtopic.icon + ' ' + subtopic.title);
     }
 
+    function startMidtermQuiz() {
+        if (!midtermQuestions.length) { loadQuestions(); if (!midtermQuestions.length) return alert('Chưa có câu hỏi ôn giữa kỳ!'); }
+        quizMode = 'midterm';
+        selectedQuestions = shuffleArray([...midtermQuestions]);
+        wrongQuestionIds = [];
+        correctQuestionIds = [];
+        beginQuiz('🎓 Ôn thi giữa kỳ');
+    }
+
     function beginQuiz(badgeText) {
         currentQuestionIndex = 0;
         score = 0;
@@ -516,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
             backBtn.addEventListener('click', goBackToTab);
             resultButtons.appendChild(backBtn);
 
-        } else {
+        } else if (quizMode === 'topic') {
             // Topic mode
             roundStat.style.display = 'none';
             reviewInfoDiv.style.display = 'none';
@@ -530,6 +547,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const backBtn = document.createElement('button');
             backBtn.className = 'secondary-btn';
             backBtn.textContent = '← Quay lại chọn chủ đề';
+            backBtn.addEventListener('click', goBackToTab);
+            resultButtons.appendChild(backBtn);
+        } else {
+            // Midterm mode
+            roundStat.style.display = 'none';
+            reviewInfoDiv.style.display = 'none';
+
+            const restartBtn2 = document.createElement('button');
+            restartBtn2.className = 'primary-btn';
+            restartBtn2.textContent = '🔄 Làm lại đề giữa kỳ';
+            restartBtn2.addEventListener('click', () => { beginQuiz('🎓 Ôn thi giữa kỳ'); });
+            resultButtons.appendChild(restartBtn2);
+
+            const backBtn = document.createElement('button');
+            backBtn.className = 'secondary-btn';
+            backBtn.textContent = '← Quay lại tab ôn giữa kỳ';
             backBtn.addEventListener('click', goBackToTab);
             resultButtons.appendChild(backBtn);
         }
@@ -579,6 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startBtn.addEventListener('click', startBasicQuiz);
     generateBtn.addEventListener('click', startBasicQuiz);
     resetBtn.addEventListener('click', () => { resetSmartState(); showToast('Đã reset về lần 1!', 'info'); });
+    if (midtermStartBtn) midtermStartBtn.addEventListener('click', startMidtermQuiz);
     nextBtn.addEventListener('click', nextQuestion);
 
     // ===== INIT =====

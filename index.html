@@ -90,30 +90,27 @@
             <div class="midterm-placeholder">
                 <div class="midterm-icon">🎓</div>
                 <h1 class="glow-text">Ôn thi Giữa kỳ</h1>
-                <p class="subtitle">Khu vực ôn tập tổng hợp cho kỳ thi giữa kỳ môn Kỹ thuật lập trình nâng cao</p>
+                <p class="subtitle">Bộ câu hỏi giữa kỳ được tách từ file PDF review trong thư mục tài liệu.</p>
                 <div class="midterm-features">
                     <div class="midterm-feature">
                         <span class="feature-icon">📋</span>
-                        <span>Đề thi mẫu</span>
+                        <span><strong id="midterm-count">0</strong> câu hỏi</span>
                     </div>
                     <div class="midterm-feature">
                         <span class="feature-icon">⏱️</span>
-                        <span>Giới hạn thời gian</span>
+                        <span>Làm theo đề gốc</span>
                     </div>
                     <div class="midterm-feature">
                         <span class="feature-icon">📊</span>
-                        <span>Thống kê chi tiết</span>
+                        <span>Chấm điểm tức thì</span>
                     </div>
                 </div>
-                <div class="coming-soon-badge">
-                    <div class="pulse-dot"></div>
-                    <span>Sắp ra mắt — Đang cập nhật câu hỏi</span>
-                </div>
+                <button id="midterm-start-btn" class="primary-btn">🎓 Bắt đầu ôn giữa kỳ</button>
                 <div class="midterm-progress">
                     <div class="midterm-progress-bar">
-                        <div class="midterm-progress-fill"></div>
+                        <div class="midterm-progress-fill" style="width: 100%;"></div>
                     </div>
-                    <span class="midterm-progress-text">0% hoàn thành</span>
+                    <span class="midterm-progress-text">Đã nạp từ tai lieu/on-thi-giua-ki.md</span>
                 </div>
             </div>
         </section>
@@ -173,6 +170,7 @@
 
     <script src="questions.js"></script>
     <script src="topic_questions.js"></script>
+    <script src="midterm_questions.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
