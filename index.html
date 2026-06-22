@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C# Quiz - Trắc nghiệm thông minh</title>
-    <meta name="description" content="Ứng dụng trắc nghiệm C# với hệ thống ôn tập thông minh">
+    <title>Cơ sở điện tử y sinh - Trắc nghiệm</title>
+    <meta name="description" content="Ứng dụng ôn tập trắc nghiệm môn Cơ sở điện tử y sinh">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -17,107 +17,57 @@
         <div class="blob blob-3"></div>
     </div>
 
-    <!-- Tab Navigation -->
     <nav id="tab-nav" class="tab-nav">
-        <div class="tab-nav-inner">
-            <button class="tab-btn active" data-tab="basic">
-                <span class="tab-icon">📝</span>
-                <span class="tab-label">Cơ bản</span>
-            </button>
-            <button class="tab-btn" data-tab="topics">
-                <span class="tab-icon">📚</span>
-                <span class="tab-label">Chủ đề</span>
-            </button>
-            <button class="tab-btn" data-tab="midterm">
-                <span class="tab-icon">🎓</span>
-                <span class="tab-label">Ôn thi GK</span>
-            </button>
-            <div class="tab-indicator"></div>
+        <div class="tab-nav-inner nine-tabs" id="part-tabs">
+            <button class="tab-btn active" data-tab="part1"><span class="tab-label">Phần 1</span></button>
+            <button class="tab-btn" data-tab="part2"><span class="tab-label">Phần 2</span></button>
+            <button class="tab-btn" data-tab="part3"><span class="tab-label">Phần 3</span></button>
+            <button class="tab-btn" data-tab="part4"><span class="tab-label">Phần 4</span></button>
+            <button class="tab-btn" data-tab="part5"><span class="tab-label">Phần 5</span></button>
+            <button class="tab-btn" data-tab="part6"><span class="tab-label">Phần 6</span></button>
+            <button class="tab-btn" data-tab="part7"><span class="tab-label">Phần 7</span></button>
+            <button class="tab-btn" data-tab="part8"><span class="tab-label">Phần 8</span></button>
+            <button class="tab-btn" data-tab="part9"><span class="tab-label">Phần 9</span></button>
         </div>
     </nav>
 
     <main class="quiz-container">
+        <section id="part-panel" class="card tab-panel active">
+            <h1 class="glow-text">Cơ sở điện tử y sinh</h1>
+            <p class="subtitle" id="part-subtitle">Đang tải dữ liệu câu hỏi...</p>
 
-        <!-- ====== TAB 1: BASIC QUIZ ====== -->
-        <section id="basic-start" class="card tab-panel active" data-tab="basic">
-            <h1 class="glow-text">C# Class Members</h1>
-            <p class="subtitle">Hệ thống trắc nghiệm thông minh — tự động ưu tiên câu sai, giúp bạn ghi nhớ tốt hơn qua 3 lần ôn tập.</p>
-            <div class="round-indicator">
-                <span class="round-badge" id="round-badge">Lần 1</span>
-                <span class="round-info" id="round-info">Lần đầu — Chọn ngẫu nhiên hoàn toàn</span>
-            </div>
             <div class="stats-overview">
                 <div class="stat-item">
-                    <span class="stat-value">30</span>
+                    <span class="stat-value" id="part-count">0</span>
                     <span class="stat-label">Câu hỏi</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value" id="total-questions">—</span>
-                    <span class="stat-label">Ngân hàng</span>
+                    <span class="stat-value" id="part-status">—</span>
+                    <span class="stat-label">Trạng thái</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value">3</span>
-                    <span class="stat-label">Lần ôn</span>
+                    <span class="stat-value">9</span>
+                    <span class="stat-label">Phần</span>
                 </div>
             </div>
+
             <div class="smart-info-card">
-                <h3>📘 Cơ chế ôn tập thông minh</h3>
-                <ul>
-                    <li><strong>Lần 1:</strong> 30 câu ngẫu nhiên từ ngân hàng đề</li>
-                    <li><strong>Lần 2:</strong> Câu sai 100% xuất hiện lại + Câu đúng 50% lặp lại</li>
-                    <li><strong>Lần 3:</strong> Câu sai 100% xuất hiện lại + Câu đúng 30% lặp lại</li>
-                    <li>Sau lần 3 sẽ <strong>reset</strong> hoàn toàn</li>
+                <h3 id="part-title">Phần 1</h3>
+                <ul id="part-notes">
+                    <li>Dữ liệu phần học sẽ được hiển thị theo tab đang chọn.</li>
                 </ul>
             </div>
-            <div class="btn-group">
-                <button id="start-btn" class="primary-btn">🚀 Bắt đầu ngay</button>
-                <button id="generate-btn" class="secondary-btn generate-btn">🎲 Tạo đề ngẫu nhiên</button>
-            </div>
-            <button id="reset-btn" class="ghost-btn">↺ Reset về lần 1</button>
-        </section>
 
-        <!-- ====== TAB 2: TOPIC QUIZ ====== -->
-        <section id="topic-selection" class="card tab-panel" data-tab="topics">
-            <h1 class="glow-text">Trắc nghiệm theo chủ đề</h1>
-            <p class="subtitle">Chọn chủ đề bạn muốn ôn tập — Hệ thống tự phân loại câu hỏi theo nội dung</p>
-            <div id="topics-container">
-                <!-- Generated by JS -->
+            <div class="btn-group" id="part-actions">
+                <button id="continue-btn" class="primary-btn hidden">Làm tiếp bài đang dở</button>
+                <button id="start-random-btn" class="primary-btn">Làm 30 câu ngẫu nhiên</button>
+                <button id="start-all-btn" class="secondary-btn">Làm toàn bộ phần này</button>
             </div>
         </section>
 
-        <!-- ====== TAB 3: MIDTERM REVIEW ====== -->
-        <section id="midterm-start" class="card tab-panel" data-tab="midterm">
-            <div class="midterm-placeholder">
-                <div class="midterm-icon">🎓</div>
-                <h1 class="glow-text">Ôn thi Giữa kỳ</h1>
-                <p class="subtitle">Bộ câu hỏi giữa kỳ được tách từ file PDF review trong thư mục tài liệu.</p>
-                <div class="midterm-features">
-                    <div class="midterm-feature">
-                        <span class="feature-icon">📋</span>
-                        <span><strong id="midterm-count">0</strong> câu hỏi</span>
-                    </div>
-                    <div class="midterm-feature">
-                        <span class="feature-icon">⏱️</span>
-                        <span>Làm theo đề gốc</span>
-                    </div>
-                    <div class="midterm-feature">
-                        <span class="feature-icon">📊</span>
-                        <span>Chấm điểm tức thì</span>
-                    </div>
-                </div>
-                <button id="midterm-start-btn" class="primary-btn">🎓 Bắt đầu ôn giữa kỳ</button>
-                <div class="midterm-progress">
-                    <div class="midterm-progress-bar">
-                        <div class="midterm-progress-fill" style="width: 100%;"></div>
-                    </div>
-                    <span class="midterm-progress-text">Đã nạp từ tai lieu/on-thi-giua-ki.md</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ====== SHARED: QUIZ SCREEN ====== -->
         <section id="quiz-screen" class="card">
             <header class="quiz-header">
+                <button id="back-to-parts-btn" class="ghost-btn back-btn">← Về 9 phần</button>
                 <div class="quiz-mode-badge" id="quiz-mode-badge"></div>
                 <div class="progress-container">
                     <div class="progress-info">
@@ -131,9 +81,6 @@
             </header>
             <div id="question-container">
                 <h2 id="question-text">Đang tải câu hỏi...</h2>
-                <div id="code-block-wrapper" class="hidden">
-                    <pre><code id="question-code"></code></pre>
-                </div>
                 <div id="options-container" class="options-grid"></div>
             </div>
             <footer class="quiz-footer">
@@ -141,9 +88,8 @@
             </footer>
         </section>
 
-        <!-- ====== SHARED: RESULTS SCREEN ====== -->
         <section id="result-screen" class="card">
-            <h2 class="glow-text">Kết quả của bạn</h2>
+            <h2 class="glow-text">Kết quả</h2>
             <div class="score-circle">
                 <svg viewBox="0 0 36 36" class="circular-chart">
                     <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -152,25 +98,21 @@
                 </svg>
             </div>
             <div class="result-details">
-                <p id="result-message">Làm tốt lắm!</p>
+                <p id="result-message">Đã hoàn thành lượt làm bài.</p>
                 <div class="final-stats">
                     <div class="final-stat"><span class="label">Đúng</span><span id="correct-count" class="value positive">0</span></div>
                     <div class="final-stat"><span class="label">Sai</span><span id="wrong-count" class="value negative">0</span></div>
-                    <div class="final-stat" id="round-stat"><span class="label">Lần</span><span id="round-result" class="value round-value">1/3</span></div>
+                    <div class="final-stat" id="round-stat"><span class="label">Phần</span><span id="round-result" class="value round-value">1</span></div>
                 </div>
                 <div class="review-info" id="review-info">
-                    <p>📋 <span id="wrong-review-count">0</span> câu sai sẽ được ưu tiên lần sau</p>
+                    <p><span id="wrong-review-count">0</span> câu sai trong lượt này.</p>
                 </div>
             </div>
-            <div class="btn-group" id="result-buttons">
-                <!-- Buttons injected by JS based on quiz mode -->
-            </div>
+            <div class="btn-group" id="result-buttons"></div>
         </section>
     </main>
 
-    <script src="questions.js"></script>
-    <script src="topic_questions.js"></script>
-    <script src="midterm_questions.js"></script>
+    <script src="biomed_questions.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
