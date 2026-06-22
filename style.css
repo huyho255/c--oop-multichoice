@@ -38,7 +38,7 @@ body {
 
 /* ====== TAB NAVIGATION ====== */
 .tab-nav {
-    width: 94%; max-width: 980px;
+    width: 90%; max-width: 800px;
     margin-top: 24px; margin-bottom: 16px;
     z-index: 10;
 }
@@ -51,10 +51,6 @@ body {
     border-radius: 16px; padding: 4px;
     gap: 4px;
 }
-.tab-nav-inner.nine-tabs {
-    display: grid;
-    grid-template-columns: repeat(9, minmax(0, 1fr));
-}
 .tab-btn {
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
     padding: 12px 16px;
@@ -63,10 +59,6 @@ body {
     font-size: 0.9rem; font-weight: 600;
     cursor: pointer; transition: var(--transition);
     position: relative; z-index: 2;
-}
-.tab-nav-inner.nine-tabs .tab-btn {
-    min-height: 44px;
-    padding: 10px 8px;
 }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--text); }
@@ -147,11 +139,6 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
 .primary-btn, .secondary-btn, .ghost-btn {
     padding: 14px 28px; border-radius: 12px; font-size: 1rem; font-weight: 600;
     cursor: pointer; transition: var(--transition); border: none; font-family: 'Inter', sans-serif; text-align: center;
-}
-.primary-btn:disabled, .secondary-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    transform: none !important;
 }
 .primary-btn {
     background: linear-gradient(135deg, var(--primary), #818cf8);
@@ -261,16 +248,10 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
 .quiz-mode-badge.basic { background: rgba(99,102,241,0.15); color: var(--primary); }
 .quiz-mode-badge.topic { background: rgba(6,182,212,0.15); color: var(--cyan); }
 .quiz-mode-badge.midterm { background: rgba(245,158,11,0.15); color: var(--amber); }
-.quiz-mode-badge.part { background: rgba(6,182,212,0.15); color: var(--cyan); }
 .quiz-mode-badge:empty { display: none; }
 
 /* ====== QUIZ HEADER & PROGRESS ====== */
 .quiz-header { margin-bottom: 8px; }
-.back-btn {
-    align-self: flex-start;
-    border-style: solid;
-    margin-bottom: 8px;
-}
 .progress-info { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; color: var(--text-muted); }
 .progress-bar-bg { height: 7px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
 #progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 10px; transition: width 0.4s ease; }
@@ -343,7 +324,6 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
     .tab-label { font-size: 0.8rem; }
     .tab-icon { font-size: 1rem; }
     .tab-btn { padding: 10px 8px; gap: 4px; }
-    .tab-nav-inner.nine-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .midterm-features { flex-direction: column; align-items: center; }
     .round-indicator { flex-direction: column; gap: 6px; }
     .final-stats { gap: 16px; }
