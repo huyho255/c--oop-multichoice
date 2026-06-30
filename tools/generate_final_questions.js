@@ -50,7 +50,7 @@ function parseQuestionBlock(block) {
     const answerMatch = line.match(/^(?:\*\*)?(?:\u0110\u00e1p \u00e1n \u0111\u00fang|Correct answer)\s*:?\s*(?:\*\*)?\s*(.+?)\s*(?:\*\*)?$/i);
     if (answerMatch) {
       const answerRaw = clean(answerMatch[1] || '').replace(/\*\*/g, '');
-      const letterMatch = answerRaw.match(/^([A-D])(?:[).:]|\b)\s*(.*)$/i);
+      const letterMatch = answerRaw.match(/^([A-D])(?:[).:]\s*|\s*$)(.*)$/i);
       if (letterMatch) {
         correct = letterMatch[1].toUpperCase();
         correctText = clean(letterMatch[2] || '');
@@ -113,7 +113,7 @@ function parseQuestionBlock(block) {
   return {
     question: clean(stem.join('\n')),
     options: options.map(option => option.text),
-    answer: correctOption ? correctOption.text : correctText,
+    answer: correctText || (correctOption ? correctOption.text : ''),
     explanation: clean(explanation),
   };
 }

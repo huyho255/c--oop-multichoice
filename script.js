@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const BUILD_CODE = 'real-final-20260701';
+    const BUILD_CODE = 'real-final-parser-20260701';
 
     // ===== DOM ELEMENTS =====
     const tabNav = document.getElementById('tab-nav');
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const lines = block.trim().split('\n');
             let qCode = '', topic = '', explanation = '';
             const qTextLines = [];
-            let options = [], correctIndex = -1, inCodeBlock = false;
+            let options = [], correctIndex = -1, correctAnswerText = '', inCodeBlock = false;
 
             lines.forEach(line => {
                 const t = line.trim();
@@ -239,10 +239,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (inCodeBlock) { qCode += line + '\n'; return; }
                 if (t.startsWith('Chủ đề:')) { topic = t.replace('Chủ đề:', '').trim(); return; }
                 if (t.startsWith('- Bạn chọn:') || t.startsWith('- Đáp án đúng:')) return;
+                if (t === '---' || t === '**Select one:**' || t === 'Select one:') return;
+                const answerMatch = t.match(/^(?:\*\*)?Đáp án đúng\s*:?\s*(?:\*\*)?\s*(.+?)\s*(?:\*\*)?$/i);
+                if (answerMatch) {
+                    correctAnswerText = answerMatch[1].trim();
+                    const letterMatch = correctAnswerText.match(/^([A-D])(?:[).:]\s*|\s*$)(.*)$/i);
+                    if (letterMatch) {
+                        correctIndex = letterMatch[1].toUpperCase().charCodeAt(0) - 65;
+                        if (letterMatch[2]) correctAnswerText = letterMatch[2].trim();
+                    }
+                    return;
+                }
                 if (t.startsWith('- [ ]') || t.startsWith('- [x]')) {
                     const isCorrect = t.startsWith('- [x]');
                     options.push(t.replace(/- \[[ x]\] /, ''));
                     if (isCorrect) correctIndex = options.length - 1;
+                    return;
+                }
+                const optionMatch = t.match(/^([A-D])[\).]\s+(.+)$/);
+                if (optionMatch) {
+                    options.push(optionMatch[2].trim());
                     return;
                 }
                 if (t.startsWith('>')) { explanation = t.replace('>', '').trim(); return; }
@@ -255,8 +271,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const parsedQuestion = splitQuestionTextAndCode(qTextLines.join('\n'), qCode);
             topic = normalizeParsedTopic(topic, idx);
+            if (correctIndex < 0 && correctAnswerText) {
+                const normalizeAnswer = value => value
+                    .replace(/^`|`$/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase();
+                const normalizedAnswer = normalizeAnswer(correctAnswerText);
+                correctIndex = options.findIndex(option => normalizeAnswer(option) === normalizedAnswer);
+            }
 
-            if (parsedQuestion.text && options.length > 0) {
+            if (parsedQuestion.text && options.length > 0 && correctIndex >= 0) {
                 questions.push({
                     id: idx, text: parsedQuestion.text, code: parsedQuestion.code,
                     options, correct: correctIndex, explanation, topic
