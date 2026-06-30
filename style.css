@@ -423,6 +423,32 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
 }
 .history-list { max-height: calc(100vh - 260px); }
 .review-list { max-height: 540px; }
+.history-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2,6,23,0.72);
+    backdrop-filter: blur(6px);
+    padding: 24px;
+}
+.history-modal-content {
+    width: min(920px, 100%);
+    max-height: min(760px, calc(100vh - 48px));
+    background: rgba(30, 41, 59, 0.96);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+}
+.history-modal .review-list {
+    max-height: calc(100vh - 170px);
+}
 .history-item,
 .review-item {
     background: rgba(15,23,42,0.45);

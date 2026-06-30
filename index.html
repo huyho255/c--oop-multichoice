@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=interface-history-click-20260630">
+    <link rel="stylesheet" href="style.css?v=history-modal-20260630">
 </head>
 <body>
     <div class="background-blobs">
@@ -24,6 +24,19 @@
         </div>
         <div id="history-list" class="history-list"></div>
     </aside>
+
+    <div id="history-modal" class="history-modal hidden" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+        <div class="history-modal-content">
+            <div class="result-panel-header">
+                <div>
+                    <h3 id="history-modal-title">Chi tiết bài làm</h3>
+                    <span id="history-modal-summary" class="panel-note"></span>
+                </div>
+                <button id="history-modal-close" class="ghost-btn small-btn">Đóng</button>
+            </div>
+            <div id="history-modal-list" class="review-list"></div>
+        </div>
+    </div>
 
     <!-- Navigation -->
     <nav id="tab-nav" class="tab-nav">
@@ -320,11 +333,11 @@
 
     <footer class="build-footer">Last update: <span id="build-code">loading</span></footer>
 
-    <script src="questions.js?v=interface-history-click-20260630"></script>
-    <script src="topic_questions.js?v=interface-history-click-20260630"></script>
-    <script src="midterm_questions.js?v=interface-history-click-20260630"></script>
-    <script src="final_questions.js?v=interface-history-click-20260630"></script>
-    <script src="final_ai_questions.js?v=interface-history-click-20260630"></script>
-    <script src="script.js?v=interface-history-click-20260630"></script>
+    <script src="questions.js?v=history-modal-20260630"></script>
+    <script src="topic_questions.js?v=history-modal-20260630"></script>
+    <script src="midterm_questions.js?v=history-modal-20260630"></script>
+    <script src="final_questions.js?v=history-modal-20260630"></script>
+    <script src="final_ai_questions.js?v=history-modal-20260630"></script>
+    <script src="script.js?v=history-modal-20260630"></script>
 </body>
 </html>

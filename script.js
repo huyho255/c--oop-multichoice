@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const BUILD_CODE = 'interface-history-click-20260630';
+    const BUILD_CODE = 'history-modal-20260630';
 
     // ===== DOM ELEMENTS =====
     const tabNav = document.getElementById('tab-nav');
@@ -56,6 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const reviewSummary = document.getElementById('review-summary');
     const clearHistoryBtn = document.getElementById('clear-history-btn');
     const buildCodeEl = document.getElementById('build-code');
+    const historyModal = document.getElementById('history-modal');
+    const historyModalTitle = document.getElementById('history-modal-title');
+    const historyModalSummary = document.getElementById('history-modal-summary');
+    const historyModalList = document.getElementById('history-modal-list');
+    const historyModalClose = document.getElementById('history-modal-close');
 
     // ===== STATE =====
     let allQuestions = [];
@@ -1049,11 +1054,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="history-score">${item.score}/${item.total} (${item.percent}%)</div>
             `;
             row.querySelector('.history-title').innerText = title;
-            row.addEventListener('click', () => renderAnswerReview(item));
+            row.addEventListener('click', () => openHistoryReview(item));
             row.addEventListener('keydown', event => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
-                    renderAnswerReview(item);
+                    openHistoryReview(item);
                 }
             });
             historyList.appendChild(row);
@@ -1084,18 +1089,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderAnswerReview(historyEntry = null) {
         if (!reviewList) return;
-        reviewList.innerHTML = '';
+        renderReviewList(reviewList, reviewSummary, historyEntry);
+    }
+
+    function openHistoryReview(historyEntry) {
+        if (!historyModal || !historyModalList) return;
+        if (historyModalTitle) historyModalTitle.innerText = historyEntry.topicTitle || historyEntry.title || 'Chi tiết bài làm';
+        renderReviewList(historyModalList, historyModalSummary, historyEntry);
+        historyModal.classList.remove('hidden');
+    }
+
+    function closeHistoryReview() {
+        if (historyModal) historyModal.classList.add('hidden');
+    }
+
+    function renderReviewList(targetList, targetSummary, historyEntry = null) {
+        targetList.innerHTML = '';
         const reviewItems = historyEntry ? (historyEntry.reviewItems || []) : buildReviewItems();
         const total = historyEntry ? historyEntry.total : selectedQuestions.length;
         const correctTotal = historyEntry ? historyEntry.score : score;
         const wrongTotal = Math.max(0, total - correctTotal);
 
-        if (reviewSummary) {
+        if (targetSummary) {
             const prefix = historyEntry ? `${formatDateTime(historyEntry.date)} · ` : '';
-            reviewSummary.textContent = `${prefix}${correctTotal} đúng · ${wrongTotal} sai`;
+            targetSummary.textContent = `${prefix}${correctTotal} đúng · ${wrongTotal} sai`;
         }
         if (!reviewItems.length) {
-            reviewList.innerHTML = '<div class="empty-state">Lịch sử cũ chưa có dữ liệu chi tiết. Làm thêm một bài mới để lưu chi tiết câu đúng/sai.</div>';
+            targetList.innerHTML = '<div class="empty-state">Lịch sử cũ chưa có dữ liệu chi tiết. Làm thêm một bài mới để lưu chi tiết câu đúng/sai.</div>';
             return;
         }
 
@@ -1119,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.querySelector('.correct-answer').innerText = 'Đáp án đúng: ' + itemData.correctAnswer;
             const explanationEl = item.querySelector('.explanation-answer');
             if (explanationEl) explanationEl.innerText = 'Giải thích: ' + itemData.explanation;
-            reviewList.appendChild(item);
+            targetList.appendChild(item);
         });
     }
 
@@ -1208,6 +1228,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (finalAiBasicGenerateBtn) finalAiBasicGenerateBtn.addEventListener('click', startBasicQuiz);
     nextBtn.addEventListener('click', nextQuestion);
     if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', clearQuizHistory);
+    if (historyModalClose) historyModalClose.addEventListener('click', closeHistoryReview);
+    if (historyModal) {
+        historyModal.addEventListener('click', event => {
+            if (event.target === historyModal) closeHistoryReview();
+        });
+    }
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeHistoryReview();
+    });
     if (quizBackBtn) quizBackBtn.addEventListener('click', () => {
         saveQuizSession();
         localStorage.removeItem(ACTIVE_SESSION_KEY);
