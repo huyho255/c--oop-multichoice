@@ -28,8 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalAiBasicStartBtn = document.getElementById('final-ai-basic-start-btn');
     const finalAiBasicGenerateBtn = document.getElementById('final-ai-basic-generate-btn');
     const finalAiBasicTotalEl = document.getElementById('final-ai-basic-total');
-    const finalSubtabBtns = document.querySelectorAll('.final-subtab-btn');
-    const finalSubtabPanels = document.querySelectorAll('.final-subtab-panel');
 
     // Shared quiz elements
     const nextBtn = document.getElementById('next-btn');
@@ -284,17 +282,19 @@ document.addEventListener('DOMContentLoaded', () => {
         switchTab(tabs[window.location.hash] || 'midterm');
     }
 
-    function switchFinalSubtab(subtabId) {
-        finalSubtabBtns.forEach(btn => {
+    function switchFinalSubtab(section, subtabId) {
+        section.querySelectorAll('.final-subtab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.finalSubtab === subtabId);
         });
-        finalSubtabPanels.forEach(panel => {
+        section.querySelectorAll('.final-subtab-panel').forEach(panel => {
             panel.classList.toggle('active', panel.dataset.finalSubtab === subtabId);
         });
     }
 
-    finalSubtabBtns.forEach(btn => {
-        btn.addEventListener('click', () => switchFinalSubtab(btn.dataset.finalSubtab));
+    document.querySelectorAll('#final-start, #final-ai-start').forEach(section => {
+        section.querySelectorAll('.final-subtab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchFinalSubtab(section, btn.dataset.finalSubtab));
+        });
     });
 
     // ===== TOPIC SELECTION (TAB 2) =====
