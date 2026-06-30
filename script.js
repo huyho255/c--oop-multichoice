@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const BUILD_CODE = 'history-sidebar-20260630';
+    const BUILD_CODE = 'interface-history-click-20260630';
 
     // ===== DOM ELEMENTS =====
     const tabNav = document.getElementById('tab-nav');
@@ -147,13 +147,13 @@ document.addEventListener('DOMContentLoaded', () => {
             subtopics: [
                 { id: 'interface-contract', title: 'Bản thiết kế hành vi', icon: '📄',
                   desc: 'Interface như một hợp đồng về hành vi cần hiện thực.',
-                  tags: ['Interface', 'Contract'] },
+                  tags: ['Interface Contract'] },
                 { id: 'interface-instance', title: 'Không khởi tạo trực tiếp', icon: '🚫',
                   desc: 'Đặc điểm không thể tạo đối tượng trực tiếp từ interface.',
-                  tags: ['Interface'] },
+                  tags: ['Interface Instance'] },
                 { id: 'multiple-interface', title: 'Đa hiện thực interface', icon: '🧩',
                   desc: 'Cơ chế hiện thực nhiều interface trong cùng một lớp.',
-                  tags: ['Interface', 'Multiple interface', 'Đa hiện thực'] },
+                  tags: ['Đa hiện thực'] },
             ]
         },
         {
@@ -213,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const parsedQuestion = splitQuestionTextAndCode(qTextLines.join('\n'), qCode);
+            topic = normalizeParsedTopic(topic, idx);
 
             if (parsedQuestion.text && options.length > 0) {
                 questions.push({
@@ -222,6 +223,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         return questions;
+    }
+
+    function normalizeParsedTopic(topic, idx) {
+        if (topic !== 'Interface') return topic;
+        if (idx >= 375 && idx <= 424) return 'Interface Contract';
+        if (idx >= 475 && idx <= 524) return 'Interface Instance';
+        return topic;
     }
 
     function splitQuestionTextAndCode(text, code) {
@@ -1012,7 +1020,8 @@ document.addEventListener('DOMContentLoaded', () => {
             percent,
             secondsElapsed,
             sourceName: currentQuizSourceName,
-            buildCode: BUILD_CODE
+            buildCode: BUILD_CODE,
+            reviewItems: buildReviewItems()
         };
         history.unshift(entry);
         localStorage.setItem(QUIZ_HISTORY_KEY, JSON.stringify(history.slice(0, 20)));
@@ -1029,6 +1038,8 @@ document.addEventListener('DOMContentLoaded', () => {
         history.forEach(item => {
             const row = document.createElement('div');
             row.className = 'history-item';
+            row.tabIndex = 0;
+            row.title = 'Bấm để xem lại chi tiết bài này';
             const title = item.topicTitle || item.title || item.mode;
             row.innerHTML = `
                 <div>
@@ -1038,6 +1049,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="history-score">${item.score}/${item.total} (${item.percent}%)</div>
             `;
             row.querySelector('.history-title').innerText = title;
+            row.addEventListener('click', () => renderAnswerReview(item));
+            row.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    renderAnswerReview(item);
+                }
+            });
             historyList.appendChild(row);
         });
     }
@@ -1048,45 +1066,59 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Đã xóa lịch sử làm bài', 'info');
     }
 
-    function renderAnswerReview() {
+    function buildReviewItems() {
+        return selectedQuestions.map((question, index) => {
+            const record = currentAnswerRecords[index];
+            if (!record) return null;
+            return {
+                index,
+                isCorrect: record.isCorrect,
+                questionText: cleanDisplayText(question.text),
+                code: question.code || '',
+                selectedAnswer: cleanDisplayText(question.options[record.selectedIndex] || 'Không rõ'),
+                correctAnswer: cleanDisplayText(question.options[question.correct] || 'Không rõ'),
+                explanation: question.explanation ? cleanDisplayText(question.explanation) : ''
+            };
+        }).filter(Boolean);
+    }
+
+    function renderAnswerReview(historyEntry = null) {
         if (!reviewList) return;
         reviewList.innerHTML = '';
-        const answered = selectedQuestions.map((question, index) => ({
-            question,
-            index,
-            record: currentAnswerRecords[index]
-        })).filter(item => item.record);
+        const reviewItems = historyEntry ? (historyEntry.reviewItems || []) : buildReviewItems();
+        const total = historyEntry ? historyEntry.total : selectedQuestions.length;
+        const correctTotal = historyEntry ? historyEntry.score : score;
+        const wrongTotal = Math.max(0, total - correctTotal);
 
         if (reviewSummary) {
-            reviewSummary.textContent = `${score} đúng · ${selectedQuestions.length - score} sai`;
+            const prefix = historyEntry ? `${formatDateTime(historyEntry.date)} · ` : '';
+            reviewSummary.textContent = `${prefix}${correctTotal} đúng · ${wrongTotal} sai`;
         }
-        if (!answered.length) {
-            reviewList.innerHTML = '<div class="empty-state">Chưa có câu trả lời để xem lại.</div>';
+        if (!reviewItems.length) {
+            reviewList.innerHTML = '<div class="empty-state">Lịch sử cũ chưa có dữ liệu chi tiết. Làm thêm một bài mới để lưu chi tiết câu đúng/sai.</div>';
             return;
         }
 
-        answered.forEach(({ question, index, record }) => {
+        reviewItems.forEach(itemData => {
             const item = document.createElement('div');
             item.className = 'review-item';
-            const status = record.isCorrect ? 'correct' : 'wrong';
-            const statusText = record.isCorrect ? 'Đúng' : 'Sai';
-            const selected = question.options[record.selectedIndex] || 'Không rõ';
-            const correct = question.options[question.correct] || 'Không rõ';
+            const status = itemData.isCorrect ? 'correct' : 'wrong';
+            const statusText = itemData.isCorrect ? 'Đúng' : 'Sai';
             item.innerHTML = `
-                <div class="review-meta"><span class="review-status ${status}">${statusText}</span> Câu ${index + 1}/${selectedQuestions.length}</div>
+                <div class="review-meta"><span class="review-status ${status}">${statusText}</span> Câu ${itemData.index + 1}/${total}</div>
                 <div class="review-question"></div>
-                ${question.code ? '<pre class="review-code"></pre>' : ''}
+                ${itemData.code ? '<pre class="review-code"></pre>' : ''}
                 <div class="review-answer selected-answer"></div>
                 <div class="review-answer correct-answer"></div>
-                ${question.explanation ? '<div class="review-answer explanation-answer"></div>' : ''}
+                ${itemData.explanation ? '<div class="review-answer explanation-answer"></div>' : ''}
             `;
-            item.querySelector('.review-question').innerText = cleanDisplayText(question.text);
+            item.querySelector('.review-question').innerText = itemData.questionText;
             const codeEl = item.querySelector('.review-code');
-            if (codeEl) codeEl.innerText = question.code;
-            item.querySelector('.selected-answer').innerText = 'Bạn chọn: ' + cleanDisplayText(selected);
-            item.querySelector('.correct-answer').innerText = 'Đáp án đúng: ' + cleanDisplayText(correct);
+            if (codeEl) codeEl.innerText = itemData.code;
+            item.querySelector('.selected-answer').innerText = 'Bạn chọn: ' + itemData.selectedAnswer;
+            item.querySelector('.correct-answer').innerText = 'Đáp án đúng: ' + itemData.correctAnswer;
             const explanationEl = item.querySelector('.explanation-answer');
-            if (explanationEl) explanationEl.innerText = 'Giải thích: ' + cleanDisplayText(question.explanation);
+            if (explanationEl) explanationEl.innerText = 'Giải thích: ' + itemData.explanation;
             reviewList.appendChild(item);
         });
     }

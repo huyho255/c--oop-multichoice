@@ -435,6 +435,14 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
     grid-template-columns: 1fr auto;
     gap: 8px;
     align-items: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.history-item:hover,
+.history-item:focus {
+    background: rgba(99,102,241,0.12);
+    border-color: rgba(99,102,241,0.35);
+    outline: none;
 }
 .history-title,
 .review-question {
