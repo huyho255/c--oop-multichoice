@@ -18,9 +18,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalQuestionsEl = document.getElementById('total-questions');
     const midtermStartBtn = document.getElementById('midterm-start-btn');
     const midtermCountEl = document.getElementById('midterm-count');
+    const finalStartBtn = document.getElementById('final-start-btn');
+    const finalCountEl = document.getElementById('final-count');
+    const finalBasicStartBtn = document.getElementById('final-basic-start-btn');
+    const finalBasicGenerateBtn = document.getElementById('final-basic-generate-btn');
+    const finalBasicTotalEl = document.getElementById('final-basic-total');
+    const finalAiStartBtn = document.getElementById('final-ai-start-btn');
+    const finalAiCountEl = document.getElementById('final-ai-count');
+    const finalAiBasicStartBtn = document.getElementById('final-ai-basic-start-btn');
+    const finalAiBasicGenerateBtn = document.getElementById('final-ai-basic-generate-btn');
+    const finalAiBasicTotalEl = document.getElementById('final-ai-basic-total');
+    const finalSubtabBtns = document.querySelectorAll('.final-subtab-btn');
+    const finalSubtabPanels = document.querySelectorAll('.final-subtab-panel');
 
     // Shared quiz elements
     const nextBtn = document.getElementById('next-btn');
+    const quizBackBtn = document.getElementById('quiz-back-btn');
     const questionText = document.getElementById('question-text');
     const questionCode = document.getElementById('question-code');
     const codeBlockWrapper = document.getElementById('code-block-wrapper');
@@ -43,16 +56,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let allQuestions = [];
     let topicQuestions = [];
     let midtermQuestions = [];
+    let finalQuestions = [];
+    let finalAiQuestions = [];
     let selectedQuestions = [];
     let currentQuestionIndex = 0;
     let score = 0;
     let timer;
     let secondsElapsed = 0;
     let isAnswered = false;
+    let currentQuizKey = '';
+    let currentQuizSourceName = '';
+    let currentQuizBadgeText = '';
+    let currentAnswerRecords = [];
+    let currentOptionOrders = [];
 
-    // Quiz mode: 'basic', 'topic', or 'midterm'
+    // Quiz mode: 'basic', 'topic', 'midterm', 'final', or 'final-ai'
     let quizMode = 'basic';
-    let activeTab = 'basic';
+    let activeTab = 'midterm';
     let currentTopicTitle = '';
 
     // Smart repetition
@@ -60,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let wrongQuestionIds = [];
     let correctQuestionIds = [];
     const STORAGE_KEY = 'csharp_quiz_smart_state';
+    const QUIZ_SESSION_PREFIX = 'csharp_quiz_session:';
+    const ACTIVE_SESSION_KEY = 'csharp_quiz_active_session_key';
     const QUESTIONS_PER_EXAM = 30;
 
     // ===== TOPIC CATEGORIES CONFIG =====
@@ -68,70 +90,88 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'class-members', icon: '🏗️',
             title: '1. Cấu trúc và thành phần của lớp (Class Members)',
             subtopics: [
-                { id: 'constructor', title: 'Constructor', icon: '🔧',
-                  desc: 'Cách khởi tạo đối tượng, nạp chồng constructor và các quy tắc về kiểu trả về',
+                { id: 'constructor', title: 'Hàm khởi tạo (Constructor)', icon: '🔧',
+                  desc: 'Cách khởi tạo, nạp chồng, quy tắc kiểu trả về, từ khóa this/base.',
                   tags: ['Constructor'] },
-                { id: 'properties', title: 'Properties', icon: '📋',
-                  desc: 'Sử dụng get/set để bảo vệ dữ liệu (Encapsulation)',
-                  tags: ['Properties', 'Static property'] },
+                { id: 'properties', title: 'Quản lý thuộc tính (Properties)', icon: '📋',
+                  desc: 'Tính đóng gói, bộ truy cập get/set, bảo vệ trường dữ liệu.',
+                  tags: ['Properties', 'Static property', 'Field'] },
                 { id: 'static', title: 'Thành phần tĩnh (Static)', icon: '📌',
-                  desc: 'Phân biệt static và non-static: biến, phương thức, constructor',
+                  desc: 'Phân biệt biến/phương thức static và thành phần non-static; quy tắc truy cập.',
                   tags: ['Static', 'Static constructor', 'Static methods', 'Static field',
                          'Static method', 'Static và instance methods', 'Static và non-static'] },
                 { id: 'methods', title: 'Phương thức (Methods)', icon: '⚡',
-                  desc: 'Định nghĩa, sử dụng và nạp chồng phương thức (Overloading)',
+                  desc: 'Định nghĩa, cách sử dụng và nạp chồng phương thức.',
                   tags: ['Method overloading', 'Phương thức'] },
-                { id: 'fields-class', title: 'Field & Class', icon: '📦',
-                  desc: 'Khai báo field, class, tạo đối tượng',
-                  tags: ['Field', 'Class', 'Class và object'] },
             ]
         },
         {
-            id: 'programming-syntax', icon: '💻',
-            title: '2. Kỹ thuật lập trình và cú pháp C#',
-            subtopics: [
-                { id: 'data-types', title: 'Kiểu dữ liệu & cấu trúc cơ bản', icon: '📊',
-                  desc: 'Kiểu dữ liệu, cú pháp cơ bản, biến và gán giá trị',
-                  tags: ['Kiểu dữ liệu', 'Cú pháp cơ bản', 'Cú pháp điều kiện',
-                         'Cấu trúc chương trình', 'Biến và gán giá trị'] },
-                { id: 'reference-type', title: 'Tham trị và tham chiếu', icon: '🔗',
-                  desc: 'Phân biệt value type vs reference type, từ khóa ref',
-                  tags: ['Reference type'] },
-                { id: 'io', title: 'Xử lý chuỗi và I/O', icon: '💬',
-                  desc: 'In dữ liệu ra màn hình, định dạng chuỗi, using System',
-                  tags: ['Using và Console', 'Namespace'] },
-                { id: 'enum', title: 'Enum & kiểu mở rộng', icon: '📝',
-                  desc: 'Kiểu liệt kê (Enum), List, Array',
-                  tags: ['Enum'] },
-            ]
-        },
-        {
-            id: 'advanced-oop', icon: '🧬',
-            title: '3. Nguyên lý hướng đối tượng nâng cao',
-            placeholder: true,
+            id: 'oop-principles', icon: '🧬',
+            title: '2. Các nguyên lý hướng đối tượng',
             subtopics: [
                 { id: 'inheritance', title: 'Kế thừa (Inheritance)', icon: '🧬',
-                  desc: 'Lớp con kế thừa từ lớp cha, thứ tự khởi tạo',
-                  tags: ['Inheritance', 'Kế thừa'], placeholder: true },
+                  desc: 'Quan hệ cha - con, thứ tự gọi và thực thi constructor.',
+                  tags: ['Inheritance', 'Kế thừa'] },
                 { id: 'polymorphism', title: 'Đa hình (Polymorphism)', icon: '🎭',
-                  desc: 'Overloading vs Overriding, virtual/override',
-                  tags: ['Polymorphism', 'Đa hình'], placeholder: true },
-                { id: 'access-modifiers', title: 'Phạm vi truy cập', icon: '🔐',
-                  desc: 'public, private, protected — kiểm soát quyền hạn',
-                  tags: ['Access Modifiers', 'Phạm vi truy cập'], placeholder: true },
+                  desc: 'Phân biệt nạp chồng phương thức và ghi đè phương thức.',
+                  tags: ['Polymorphism', 'Đa hình', 'Method overloading'] },
+                { id: 'access-modifiers', title: 'Phạm vi truy cập (Access Modifiers)', icon: '🔐',
+                  desc: 'Quy tắc sử dụng public, private, protected.',
+                  tags: ['Access Modifiers', 'Phạm vi truy cập'] },
             ]
         },
         {
-            id: 'code-reading', icon: '🔍',
-            title: '4. Kỹ năng đọc hiểu và truy vết mã',
-            placeholder: true,
+            id: 'exception', icon: '⚠️',
+            title: '3. Xử lý ngoại lệ (Exception)',
+            subtopics: [
+                { id: 'runtime-error', title: 'Lỗi Runtime', icon: '⏱️',
+                  desc: 'Khái niệm lỗi phát sinh khi chương trình đang chạy.',
+                  tags: ['Runtime error', 'Lỗi Runtime', 'Exception'] },
+                { id: 'try-catch-finally', title: 'try - catch - finally', icon: '🧱',
+                  desc: 'Cấu trúc khối lệnh try, catch và finally.',
+                  tags: ['try catch finally', 'Try catch finally', 'Exception'] },
+                { id: 'throw', title: 'Ném ngoại lệ (throw)', icon: '↗️',
+                  desc: 'Cơ chế và từ khóa ném ngoại lệ.',
+                  tags: ['throw', 'Throw', 'Exception'] },
+            ]
+        },
+        {
+            id: 'interface', icon: '🔌',
+            title: '4. Interface',
+            subtopics: [
+                { id: 'interface-contract', title: 'Bản thiết kế hành vi', icon: '📄',
+                  desc: 'Interface như một hợp đồng về hành vi cần hiện thực.',
+                  tags: ['Interface', 'Contract'] },
+                { id: 'interface-instance', title: 'Không khởi tạo trực tiếp', icon: '🚫',
+                  desc: 'Đặc điểm không thể tạo đối tượng trực tiếp từ interface.',
+                  tags: ['Interface'] },
+                { id: 'multiple-interface', title: 'Đa hiện thực interface', icon: '🧩',
+                  desc: 'Cơ chế hiện thực nhiều interface trong cùng một lớp.',
+                  tags: ['Interface', 'Multiple interface', 'Đa hiện thực'] },
+            ]
+        },
+        {
+            id: 'delegate-event', icon: '📣',
+            title: '5. Delegate và Event',
+            subtopics: [
+                { id: 'delegate', title: 'Delegate', icon: '🔗',
+                  desc: 'Bản chất tham chiếu phương thức, multicast delegate.',
+                  tags: ['Delegate', 'Multicast delegate'] },
+                { id: 'event', title: 'Event', icon: '📢',
+                  desc: 'Mô hình Publisher - Subscriber, cơ chế kích hoạt và đăng ký sự kiện.',
+                  tags: ['Event', 'Publisher Subscriber', 'Publisher - Subscriber'] },
+            ]
+        },
+        {
+            id: 'reading-debugging', icon: '🔍',
+            title: '6. Kỹ năng đọc hiểu và sửa lỗi',
             subtopics: [
                 { id: 'predict-output', title: 'Dự đoán kết quả', icon: '🔮',
-                  desc: 'Phân tích logic để xác định giá trị cuối cùng',
-                  tags: ['Dự đoán kết quả'], placeholder: true },
-                { id: 'find-errors', title: 'Phát hiện lỗi', icon: '🐛',
-                  desc: 'Nhận diện lỗi cú pháp hoặc vi phạm nguyên tắc',
-                  tags: ['Phát hiện lỗi'], placeholder: true },
+                  desc: 'Phân tích logic luồng chạy, xác định giá trị biến hoặc kết quả in ra màn hình.',
+                  tags: ['Dự đoán kết quả', 'Predict output'] },
+                { id: 'find-errors', title: 'Phát hiện lỗi', icon: '🧪',
+                  desc: 'Nhận diện lỗi cú pháp, lỗi vi phạm nguyên lý OOP hoặc lỗi ép kiểu.',
+                  tags: ['Phát hiện lỗi', 'Syntax error', 'Ép kiểu'] },
             ]
         }
     ];
@@ -158,6 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 if (t.startsWith('>')) { explanation = t.replace('>', '').trim(); return; }
+                if (options.length > 0 && t) {
+                    options[options.length - 1] += '\n' + line;
+                    return;
+                }
                 if (t && !options.length) qText += line + ' ';
             });
 
@@ -176,6 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
             allQuestions = parseMarkdown(window.questionBankData);
             console.log(`Loaded ${allQuestions.length} questions.`);
             if (totalQuestionsEl) totalQuestionsEl.textContent = allQuestions.length;
+            if (finalBasicTotalEl) finalBasicTotalEl.textContent = allQuestions.length;
+            if (finalAiBasicTotalEl) finalAiBasicTotalEl.textContent = allQuestions.length;
         }
         if (window.topicQuestionBankData) {
             topicQuestions = parseMarkdown(window.topicQuestionBankData);
@@ -185,6 +231,16 @@ document.addEventListener('DOMContentLoaded', () => {
             midtermQuestions = parseMarkdown(window.midtermQuestionBankData);
             console.log(`Loaded ${midtermQuestions.length} midterm questions.`);
             if (midtermCountEl) midtermCountEl.textContent = midtermQuestions.length;
+        }
+        if (window.finalQuestionBankData) {
+            finalQuestions = parseMarkdown(window.finalQuestionBankData);
+            console.log(`Loaded ${finalQuestions.length} final questions.`);
+            if (finalCountEl) finalCountEl.textContent = finalQuestions.length;
+        }
+        if (window.finalAiQuestionBankData) {
+            finalAiQuestions = parseMarkdown(window.finalAiQuestionBankData);
+            console.log(`Loaded ${finalAiQuestions.length} final AI questions.`);
+            if (finalAiCountEl) finalAiCountEl.textContent = finalAiQuestions.length;
         }
     }
 
@@ -204,15 +260,46 @@ document.addEventListener('DOMContentLoaded', () => {
         quizScreen.classList.remove('active');
         resultScreen.classList.remove('active');
         tabNav.classList.remove('hidden');
+        const hashes = {
+            midterm: '#giuaki',
+            final: '#cuoiki',
+            'final-ai': '#cuoiki-ai'
+        };
+        const hash = hashes[tabId] || '#giuaki';
+        if (window.location.hash !== hash) window.location.hash = hash;
     }
 
     tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        btn.addEventListener('click', event => {
+            event.preventDefault();
+            switchTab(btn.dataset.tab);
+        });
+    });
+
+    function syncTabFromHash() {
+        const tabs = {
+            '#cuoiki': 'final',
+            '#cuoiki-ai': 'final-ai'
+        };
+        switchTab(tabs[window.location.hash] || 'midterm');
+    }
+
+    function switchFinalSubtab(subtabId) {
+        finalSubtabBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.finalSubtab === subtabId);
+        });
+        finalSubtabPanels.forEach(panel => {
+            panel.classList.toggle('active', panel.dataset.finalSubtab === subtabId);
+        });
+    }
+
+    finalSubtabBtns.forEach(btn => {
+        btn.addEventListener('click', () => switchFinalSubtab(btn.dataset.finalSubtab));
     });
 
     // ===== TOPIC SELECTION (TAB 2) =====
-    function buildTopicUI() {
-        const container = document.getElementById('topics-container');
+    function buildTopicUI(containerId = 'topics-container', questionSource = topicQuestions, sourceName = 'topic') {
+        const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
 
@@ -223,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Count questions for this category
             let catCount = 0;
             cat.subtopics.forEach(sub => {
-                sub._count = getQuestionsForTags(sub.tags).length;
+                sub._count = getQuestionsForTags(sub.tags, questionSource).length;
                 catCount += sub._count;
             });
 
@@ -256,7 +343,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     </span>
                 `;
                 if (!isDisabled) {
-                    card.addEventListener('click', () => startTopicQuiz(sub));
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'subtopic-reset-btn';
+                    resetBtn.type = 'button';
+                    resetBtn.textContent = 'Reset';
+                    resetBtn.title = 'Xóa bài đang làm của chủ đề này';
+                    resetBtn.addEventListener('click', event => {
+                        event.stopPropagation();
+                        clearQuizSession(`topic:${sourceName}:${sub.id}`);
+                        showToast('Đã reset chủ đề này', 'info');
+                    });
+                    card.appendChild(resetBtn);
+                    card.addEventListener('click', () => startTopicQuiz(sub, questionSource, sourceName));
                 }
                 grid.appendChild(card);
             });
@@ -273,9 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function getQuestionsForTags(tags) {
+    function getQuestionsForTags(tags, questionSource = topicQuestions) {
         if (!tags || tags.length === 0) return [];
-        return topicQuestions.filter(q => tags.includes(q.topic));
+        return questionSource.filter(q => tags.includes(q.topic));
     }
 
     // ===== SCREEN MANAGEMENT =====
@@ -361,6 +459,104 @@ document.addEventListener('DOMContentLoaded', () => {
         return shuffleArray(selected);
     }
 
+    // ===== QUIZ SESSION CACHE =====
+    function getQuestionSource(sourceName) {
+        const sources = {
+            basic: allQuestions,
+            topic: topicQuestions,
+            midterm: midtermQuestions,
+            final: finalQuestions,
+            'final-ai': finalAiQuestions
+        };
+        return sources[sourceName] || topicQuestions;
+    }
+
+    function sessionStorageKey(quizKey) {
+        return QUIZ_SESSION_PREFIX + quizKey;
+    }
+
+    function loadQuizSession(quizKey) {
+        try {
+            return JSON.parse(localStorage.getItem(sessionStorageKey(quizKey)));
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function clearQuizSession(quizKey) {
+        if (quizKey) localStorage.removeItem(sessionStorageKey(quizKey));
+        if (localStorage.getItem(ACTIVE_SESSION_KEY) === quizKey) {
+            localStorage.removeItem(ACTIVE_SESSION_KEY);
+        }
+    }
+
+    function saveQuizSession() {
+        if (!currentQuizKey) return;
+        localStorage.setItem(ACTIVE_SESSION_KEY, currentQuizKey);
+        localStorage.setItem(sessionStorageKey(currentQuizKey), JSON.stringify({
+            quizKey: currentQuizKey,
+            quizMode,
+            sourceName: currentQuizSourceName,
+            badgeText: currentQuizBadgeText,
+            currentTopicTitle,
+            activeTab,
+            selectedIds: selectedQuestions.map(q => q.id),
+            currentQuestionIndex,
+            score,
+            secondsElapsed,
+            isAnswered,
+            wrongQuestionIds,
+            correctQuestionIds,
+            answerRecords: currentAnswerRecords,
+            optionOrders: currentOptionOrders
+        }));
+    }
+
+    function restoreQuizSession(session) {
+        if (!session || !session.selectedIds || !session.sourceName) return false;
+        const source = getQuestionSource(session.sourceName);
+        const byId = new Map(source.map(q => [q.id, q]));
+        const restoredQuestions = session.selectedIds.map(id => byId.get(id)).filter(Boolean);
+        if (!restoredQuestions.length || restoredQuestions.length !== session.selectedIds.length) return false;
+
+        currentQuizKey = session.quizKey;
+        quizMode = session.quizMode;
+        currentQuizSourceName = session.sourceName;
+        currentQuizBadgeText = session.badgeText;
+        currentTopicTitle = session.currentTopicTitle || '';
+        activeTab = session.activeTab || activeTab;
+        selectedQuestions = restoredQuestions;
+        currentQuestionIndex = Math.min(session.currentQuestionIndex || 0, selectedQuestions.length - 1);
+        score = session.score || 0;
+        secondsElapsed = session.secondsElapsed || 0;
+        isAnswered = !!session.isAnswered;
+        wrongQuestionIds = session.wrongQuestionIds || [];
+        correctQuestionIds = session.correctQuestionIds || [];
+        currentAnswerRecords = session.answerRecords || [];
+        currentOptionOrders = session.optionOrders || [];
+        beginQuiz(currentQuizBadgeText, { restore: true });
+        return true;
+    }
+
+    function startCachedQuiz({ quizKey, mode, sourceName, questions, badgeText, topicTitle = '' }) {
+        if (restoreQuizSession(loadQuizSession(quizKey))) {
+            showToast('Đã tiếp tục bài đang làm', 'info');
+            return;
+        }
+
+        currentQuizKey = quizKey;
+        quizMode = mode;
+        currentQuizSourceName = sourceName;
+        currentQuizBadgeText = badgeText;
+        currentTopicTitle = topicTitle;
+        selectedQuestions = questions;
+        wrongQuestionIds = [];
+        correctQuestionIds = [];
+        currentAnswerRecords = [];
+        currentOptionOrders = selectedQuestions.map(q => shuffleArray(q.options.map((_, i) => i)));
+        beginQuiz(badgeText);
+    }
+
     // ===== START QUIZ =====
     function startBasicQuiz() {
         if (!allQuestions.length) { loadQuestions(); if (!allQuestions.length) return alert('Dữ liệu chưa sẵn sàng!'); }
@@ -374,8 +570,8 @@ document.addEventListener('DOMContentLoaded', () => {
         beginQuiz('Trắc nghiệm cơ bản — Lần ' + currentRound);
     }
 
-    function startTopicQuiz(subtopic) {
-        const qs = getQuestionsForTags(subtopic.tags);
+    function startTopicQuiz(subtopic, questionSource = topicQuestions) {
+        const qs = getQuestionsForTags(subtopic.tags, questionSource);
         if (!qs.length) return alert('Chưa có câu hỏi cho chủ đề này!');
         quizMode = 'topic';
         currentTopicTitle = subtopic.title;
@@ -392,6 +588,24 @@ document.addEventListener('DOMContentLoaded', () => {
         wrongQuestionIds = [];
         correctQuestionIds = [];
         beginQuiz('🎓 Ôn thi giữa kỳ');
+    }
+
+    function startFinalQuiz() {
+        if (!finalQuestions.length) { loadQuestions(); if (!finalQuestions.length) return alert('Chưa có câu hỏi ôn cuối kỳ!'); }
+        quizMode = 'final';
+        selectedQuestions = shuffleArray([...finalQuestions]);
+        wrongQuestionIds = [];
+        correctQuestionIds = [];
+        beginQuiz('🏁 Ôn thi cuối kỳ');
+    }
+
+    function startFinalAiQuiz() {
+        if (!finalAiQuestions.length) { loadQuestions(); if (!finalAiQuestions.length) return alert('Chưa có câu hỏi ôn cuối kỳ - AI!'); }
+        quizMode = 'final-ai';
+        selectedQuestions = shuffleArray([...finalAiQuestions]);
+        wrongQuestionIds = [];
+        correctQuestionIds = [];
+        beginQuiz('🤖 Ôn thi cuối kỳ - AI');
     }
 
     function beginQuiz(badgeText) {
@@ -411,32 +625,133 @@ document.addEventListener('DOMContentLoaded', () => {
         startTimer();
     }
 
+    function startBasicQuiz() {
+        if (!allQuestions.length) { loadQuestions(); if (!allQuestions.length) return alert('Dữ liệu chưa sẵn sàng!'); }
+        loadSmartState();
+        updateRoundUI();
+        const questions = generateSmartQuestionSet();
+        if (!questions.length) return alert('Không thể tạo đề!');
+        startCachedQuiz({
+            quizKey: 'basic:main',
+            mode: 'basic',
+            sourceName: 'basic',
+            questions,
+            badgeText: 'Trắc nghiệm cơ bản - Lần ' + currentRound
+        });
+    }
+
+    function startTopicQuiz(subtopic, questionSource = topicQuestions, sourceName = 'topic') {
+        const qs = getQuestionsForTags(subtopic.tags, questionSource);
+        if (!qs.length) return alert('Chưa có câu hỏi cho chủ đề này!');
+        startCachedQuiz({
+            quizKey: `topic:${sourceName}:${subtopic.id}`,
+            mode: 'topic',
+            sourceName,
+            questions: shuffleArray([...qs]),
+            badgeText: subtopic.icon + ' ' + subtopic.title,
+            topicTitle: subtopic.title
+        });
+    }
+
+    function startMidtermQuiz() {
+        if (!midtermQuestions.length) { loadQuestions(); if (!midtermQuestions.length) return alert('Chưa có câu hỏi ôn giữa kỳ!'); }
+        startCachedQuiz({
+            quizKey: 'exam:midterm',
+            mode: 'midterm',
+            sourceName: 'midterm',
+            questions: shuffleArray([...midtermQuestions]),
+            badgeText: 'Ôn thi giữa kỳ'
+        });
+    }
+
+    function startFinalQuiz() {
+        if (!finalQuestions.length) { loadQuestions(); if (!finalQuestions.length) return alert('Chưa có câu hỏi ôn cuối kỳ!'); }
+        startCachedQuiz({
+            quizKey: 'exam:final',
+            mode: 'final',
+            sourceName: 'final',
+            questions: shuffleArray([...finalQuestions]),
+            badgeText: 'Ôn thi cuối kỳ'
+        });
+    }
+
+    function startFinalAiQuiz() {
+        if (!finalAiQuestions.length) { loadQuestions(); if (!finalAiQuestions.length) return alert('Chưa có câu hỏi ôn cuối kỳ - AI!'); }
+        startCachedQuiz({
+            quizKey: 'exam:final-ai',
+            mode: 'final-ai',
+            sourceName: 'final-ai',
+            questions: shuffleArray([...finalAiQuestions]),
+            badgeText: 'Ôn thi cuối kỳ - AI'
+        });
+    }
+
+    function beginQuiz(badgeText, opts = {}) {
+        if (!opts.restore) {
+            currentQuizBadgeText = badgeText;
+            currentQuestionIndex = 0;
+            score = 0;
+            secondsElapsed = 0;
+            isAnswered = false;
+            wrongQuestionIds = [];
+            correctQuestionIds = [];
+            currentAnswerRecords = [];
+            currentOptionOrders = [];
+        }
+
+        if (quizModeBadge) {
+            quizModeBadge.textContent = badgeText;
+            quizModeBadge.className = 'quiz-mode-badge ' + quizMode;
+        }
+
+        showScreen('quiz');
+        showQuestion();
+        startTimer();
+        saveQuizSession();
+    }
+
     // ===== QUIZ ENGINE =====
     function showQuestion() {
         const q = selectedQuestions[currentQuestionIndex];
-        isAnswered = false;
-        nextBtn.classList.add('hidden');
+        const answerRecord = currentAnswerRecords[currentQuestionIndex];
+        isAnswered = !!answerRecord;
+        nextBtn.classList.toggle('hidden', !isAnswered);
         // Remove old explanation
         const oldExp = document.querySelector('.explanation');
         if (oldExp) oldExp.remove();
 
         questionNumber.innerText = `Câu ${currentQuestionIndex + 1}/${selectedQuestions.length}`;
         progressBarFill.style.width = `${((currentQuestionIndex + 1) / selectedQuestions.length) * 100}%`;
-        questionText.innerText = q.text;
+        questionText.innerText = cleanDisplayText(q.text);
 
         if (q.code) { codeBlockWrapper.classList.remove('hidden'); questionCode.innerText = q.code; }
         else { codeBlockWrapper.classList.add('hidden'); }
 
         optionsContainer.innerHTML = '';
-        const indices = shuffleArray(q.options.map((_, i) => i));
+        if (!currentOptionOrders[currentQuestionIndex]) {
+            currentOptionOrders[currentQuestionIndex] = shuffleArray(q.options.map((_, i) => i));
+        }
+        const indices = currentOptionOrders[currentQuestionIndex];
         indices.forEach(oi => {
             const div = document.createElement('div');
             div.className = 'option';
-            div.innerHTML = `<div class="option-indicator"></div><span>${q.options[oi]}</span>`;
+            div.innerHTML = `<div class="option-indicator"></div><span></span>`;
+            div.querySelector('span').innerText = cleanDisplayText(q.options[oi]);
             div.dataset.originalIndex = oi;
             div.addEventListener('click', () => selectOption(oi, div));
+            if (answerRecord) {
+                if (oi === q.correct) div.classList.add('correct');
+                if (oi === answerRecord.selectedIndex && oi !== q.correct) div.classList.add('wrong');
+            }
             optionsContainer.appendChild(div);
         });
+
+        if (answerRecord && q.explanation) {
+            const exp = document.createElement('div');
+            exp.className = 'explanation';
+            exp.innerHTML = `<strong>💡 Giải thích:</strong> ${q.explanation}`;
+            optionsContainer.parentElement.appendChild(exp);
+        }
     }
 
     function selectOption(index, element) {
@@ -459,6 +774,11 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Sai rồi! ✗', 'error');
         }
 
+        currentAnswerRecords[currentQuestionIndex] = {
+            selectedIndex: index,
+            isCorrect: index === q.correct
+        };
+
         if (q.explanation) {
             const exp = document.createElement('div');
             exp.className = 'explanation';
@@ -466,19 +786,24 @@ document.addEventListener('DOMContentLoaded', () => {
             optionsContainer.parentElement.appendChild(exp);
         }
         nextBtn.classList.remove('hidden');
+        saveQuizSession();
     }
 
     function nextQuestion() {
         const oldExp = document.querySelector('.explanation');
         if (oldExp) oldExp.remove();
         currentQuestionIndex++;
-        if (currentQuestionIndex < selectedQuestions.length) showQuestion();
+        if (currentQuestionIndex < selectedQuestions.length) {
+            saveQuizSession();
+            showQuestion();
+        }
         else showResults();
     }
 
     // ===== RESULTS =====
     function showResults() {
         clearInterval(timer);
+        clearQuizSession(currentQuizKey);
         const totalAnswered = selectedQuestions.length || 1;
         const percent = Math.round((score / totalAnswered) * 100);
 
@@ -549,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
             backBtn.textContent = '← Quay lại chọn chủ đề';
             backBtn.addEventListener('click', goBackToTab);
             resultButtons.appendChild(backBtn);
-        } else {
+        } else if (quizMode === 'midterm') {
             // Midterm mode
             roundStat.style.display = 'none';
             reviewInfoDiv.style.display = 'none';
@@ -565,6 +890,25 @@ document.addEventListener('DOMContentLoaded', () => {
             backBtn.textContent = '← Quay lại tab ôn giữa kỳ';
             backBtn.addEventListener('click', goBackToTab);
             resultButtons.appendChild(backBtn);
+        } else {
+            // Final modes
+            roundStat.style.display = 'none';
+            reviewInfoDiv.style.display = 'none';
+            const isFinalAi = quizMode === 'final-ai';
+            const finalTitle = isFinalAi ? 'cuối kỳ - AI' : 'cuối kỳ';
+            const finalBadge = isFinalAi ? '🤖 Ôn thi cuối kỳ - AI' : '🏁 Ôn thi cuối kỳ';
+
+            const restartBtn2 = document.createElement('button');
+            restartBtn2.className = 'primary-btn';
+            restartBtn2.textContent = '🔄 Làm lại đề ' + finalTitle;
+            restartBtn2.addEventListener('click', () => { beginQuiz(finalBadge); });
+            resultButtons.appendChild(restartBtn2);
+
+            const backBtn = document.createElement('button');
+            backBtn.className = 'secondary-btn';
+            backBtn.textContent = '← Quay lại tab ôn ' + finalTitle;
+            backBtn.addEventListener('click', goBackToTab);
+            resultButtons.appendChild(backBtn);
         }
     }
 
@@ -578,14 +922,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return a;
     }
 
+    function cleanDisplayText(text) {
+        return String(text || '')
+            .replace(/^-\s*\[[ x]\]\s*/gm, '')
+            .replace(/```[a-zA-Z0-9_-]*\n?/g, '')
+            .replace(/```/g, '')
+            .replace(/`([^`\n]+)`/g, '$1')
+            .trim();
+    }
+
     function startTimer() {
         clearInterval(timer);
-        secondsElapsed = 0;
-        timer = setInterval(() => {
-            secondsElapsed++;
+        const renderTimer = () => {
             const m = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
             const s = (secondsElapsed % 60).toString().padStart(2, '0');
             timerEl.innerText = `${m}:${s}`;
+        };
+        renderTimer();
+        timer = setInterval(() => {
+            secondsElapsed++;
+            renderTimer();
+            saveQuizSession();
         }, 1000);
     }
 
@@ -609,15 +966,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ===== EVENT LISTENERS =====
-    startBtn.addEventListener('click', startBasicQuiz);
-    generateBtn.addEventListener('click', startBasicQuiz);
-    resetBtn.addEventListener('click', () => { resetSmartState(); showToast('Đã reset về lần 1!', 'info'); });
+    if (startBtn) startBtn.addEventListener('click', startBasicQuiz);
+    if (generateBtn) generateBtn.addEventListener('click', startBasicQuiz);
+    if (resetBtn) resetBtn.addEventListener('click', () => clearQuizSession('basic:main'));
+    if (resetBtn) resetBtn.addEventListener('click', () => { resetSmartState(); showToast('Đã reset về lần 1!', 'info'); });
     if (midtermStartBtn) midtermStartBtn.addEventListener('click', startMidtermQuiz);
+    if (finalStartBtn) finalStartBtn.addEventListener('click', startFinalQuiz);
+    if (finalBasicStartBtn) finalBasicStartBtn.addEventListener('click', startBasicQuiz);
+    if (finalBasicGenerateBtn) finalBasicGenerateBtn.addEventListener('click', startBasicQuiz);
+    if (finalAiStartBtn) finalAiStartBtn.addEventListener('click', startFinalAiQuiz);
+    if (finalAiBasicStartBtn) finalAiBasicStartBtn.addEventListener('click', startBasicQuiz);
+    if (finalAiBasicGenerateBtn) finalAiBasicGenerateBtn.addEventListener('click', startBasicQuiz);
     nextBtn.addEventListener('click', nextQuestion);
+    if (quizBackBtn) quizBackBtn.addEventListener('click', () => {
+        saveQuizSession();
+        localStorage.removeItem(ACTIVE_SESSION_KEY);
+        clearInterval(timer);
+        goBackToTab();
+    });
+    window.addEventListener('hashchange', syncTabFromHash);
 
     // ===== INIT =====
     loadQuestions();
     loadSmartState();
     updateRoundUI();
     buildTopicUI();
+    buildTopicUI('final-topics-container', finalQuestions.length ? finalQuestions : topicQuestions, finalQuestions.length ? 'final' : 'topic');
+    buildTopicUI('final-ai-topics-container', finalAiQuestions, 'final-ai');
+    syncTabFromHash();
+    const activeSessionKey = localStorage.getItem(ACTIVE_SESSION_KEY);
+    if (activeSessionKey) restoreQuizSession(loadQuizSession(activeSessionKey));
 });
