@@ -373,6 +373,21 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
     border-radius: 10px; font-size: 0.85rem; color: var(--amber);
 }
 .review-info p { margin: 0; }
+.history-sidebar {
+    position: fixed;
+    top: 145px;
+    left: max(24px, calc((100vw - 800px) / 2 - 324px));
+    width: 300px;
+    max-height: calc(100vh - 180px);
+    z-index: 5;
+    background: rgba(30, 41, 59, 0.62);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    box-shadow: 0 20px 45px -22px rgba(0,0,0,0.65);
+    padding: 14px;
+}
 .result-panel {
     background: rgba(255,255,255,0.035);
     border: 1px solid var(--glass-border);
@@ -404,9 +419,10 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 360px;
     overflow-y: auto;
 }
+.history-list { max-height: calc(100vh - 260px); }
+.review-list { max-height: 540px; }
 .history-item,
 .review-item {
     background: rgba(15,23,42,0.45);
@@ -425,6 +441,7 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
     font-weight: 700;
     line-height: 1.45;
 }
+.review-question { margin: 4px 0 8px; }
 .history-meta,
 .review-meta,
 .review-answer {
@@ -432,6 +449,14 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
     font-size: 0.82rem;
     line-height: 1.5;
 }
+.review-answer {
+    margin-top: 4px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.selected-answer { color: #cbd5e1; }
+.correct-answer { color: var(--success); }
+.explanation-answer { color: var(--cyan); }
 .history-score {
     font-weight: 800;
     color: var(--primary);
@@ -478,6 +503,21 @@ h1, h2 { font-family: 'Poppins', sans-serif; font-weight: 700; text-align: cente
     opacity: 0.85;
 }
 .build-footer span { color: var(--cyan); font-weight: 700; }
+
+@media (max-width: 1200px) {
+    .tab-nav { order: 1; }
+    .quiz-container { order: 2; }
+    .history-sidebar {
+        position: static;
+        order: 3;
+        width: 90%;
+        max-width: 800px;
+        max-height: none;
+        margin: 16px auto 0;
+    }
+    .history-list { max-height: 260px; }
+    .build-footer { order: 4; }
+}
 
 /* ====== HELPERS ====== */
 .hidden { display: none !important; }

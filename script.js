@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const BUILD_CODE = 'history-review-20260630-c32f140';
+    const BUILD_CODE = 'history-sidebar-20260630';
 
     // ===== DOM ELEMENTS =====
     const tabNav = document.getElementById('tab-nav');
@@ -1073,7 +1073,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const selected = question.options[record.selectedIndex] || 'Không rõ';
             const correct = question.options[question.correct] || 'Không rõ';
             item.innerHTML = `
-                <div class="review-meta"><span class="review-status ${status}">${statusText}</span>Câu ${index + 1}/${selectedQuestions.length}</div>
+                <div class="review-meta"><span class="review-status ${status}">${statusText}</span> Câu ${index + 1}/${selectedQuestions.length}</div>
                 <div class="review-question"></div>
                 ${question.code ? '<pre class="review-code"></pre>' : ''}
                 <div class="review-answer selected-answer"></div>
