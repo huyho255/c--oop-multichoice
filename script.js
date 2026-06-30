@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const BUILD_CODE = 'history-review-20260630-c32f140';
+
     // ===== DOM ELEMENTS =====
     const tabNav = document.getElementById('tab-nav');
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -49,6 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultButtons = document.getElementById('result-buttons');
     const roundStat = document.getElementById('round-stat');
     const reviewInfoDiv = document.getElementById('review-info');
+    const historyList = document.getElementById('history-list');
+    const reviewList = document.getElementById('review-list');
+    const reviewSummary = document.getElementById('review-summary');
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
+    const buildCodeEl = document.getElementById('build-code');
 
     // ===== STATE =====
     let allQuestions = [];
@@ -80,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const STORAGE_KEY = 'csharp_quiz_smart_state';
     const QUIZ_SESSION_PREFIX = 'csharp_quiz_session:';
     const ACTIVE_SESSION_KEY = 'csharp_quiz_active_session_key';
+    const QUIZ_HISTORY_KEY = 'csharp_quiz_history';
     const QUESTIONS_PER_EXAM = 30;
 
     // ===== TOPIC CATEGORIES CONFIG =====
@@ -880,6 +888,9 @@ document.addEventListener('DOMContentLoaded', () => {
         scoreCircleFill.style.strokeDasharray = `${percent} 100`;
         correctCountEl.innerText = score;
         wrongCountEl.innerText = selectedQuestions.length - score;
+        saveQuizHistory(percent);
+        renderQuizHistory();
+        renderAnswerReview();
 
         if (percent >= 80) resultMessage.innerText = 'Xuất sắc! Bạn nắm rất vững kiến thức. 🎉';
         else if (percent >= 50) resultMessage.innerText = 'Khá tốt! Hãy ôn luyện thêm một chút. 💪';
@@ -978,6 +989,126 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ===== HISTORY AND REVIEW =====
+    function loadQuizHistory() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(QUIZ_HISTORY_KEY));
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveQuizHistory(percent) {
+        const history = loadQuizHistory();
+        const entry = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            mode: quizMode,
+            title: currentQuizBadgeText || quizMode,
+            topicTitle: currentTopicTitle,
+            score,
+            total: selectedQuestions.length,
+            percent,
+            secondsElapsed,
+            sourceName: currentQuizSourceName,
+            buildCode: BUILD_CODE
+        };
+        history.unshift(entry);
+        localStorage.setItem(QUIZ_HISTORY_KEY, JSON.stringify(history.slice(0, 20)));
+    }
+
+    function renderQuizHistory() {
+        if (!historyList) return;
+        const history = loadQuizHistory();
+        historyList.innerHTML = '';
+        if (!history.length) {
+            historyList.innerHTML = '<div class="empty-state">Chưa có lịch sử làm bài.</div>';
+            return;
+        }
+        history.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'history-item';
+            const title = item.topicTitle || item.title || item.mode;
+            row.innerHTML = `
+                <div>
+                    <div class="history-title"></div>
+                    <div class="history-meta">${formatDateTime(item.date)} · ${formatDuration(item.secondsElapsed)} · ${item.buildCode || 'unknown'}</div>
+                </div>
+                <div class="history-score">${item.score}/${item.total} (${item.percent}%)</div>
+            `;
+            row.querySelector('.history-title').innerText = title;
+            historyList.appendChild(row);
+        });
+    }
+
+    function clearQuizHistory() {
+        localStorage.removeItem(QUIZ_HISTORY_KEY);
+        renderQuizHistory();
+        showToast('Đã xóa lịch sử làm bài', 'info');
+    }
+
+    function renderAnswerReview() {
+        if (!reviewList) return;
+        reviewList.innerHTML = '';
+        const answered = selectedQuestions.map((question, index) => ({
+            question,
+            index,
+            record: currentAnswerRecords[index]
+        })).filter(item => item.record);
+
+        if (reviewSummary) {
+            reviewSummary.textContent = `${score} đúng · ${selectedQuestions.length - score} sai`;
+        }
+        if (!answered.length) {
+            reviewList.innerHTML = '<div class="empty-state">Chưa có câu trả lời để xem lại.</div>';
+            return;
+        }
+
+        answered.forEach(({ question, index, record }) => {
+            const item = document.createElement('div');
+            item.className = 'review-item';
+            const status = record.isCorrect ? 'correct' : 'wrong';
+            const statusText = record.isCorrect ? 'Đúng' : 'Sai';
+            const selected = question.options[record.selectedIndex] || 'Không rõ';
+            const correct = question.options[question.correct] || 'Không rõ';
+            item.innerHTML = `
+                <div class="review-meta"><span class="review-status ${status}">${statusText}</span>Câu ${index + 1}/${selectedQuestions.length}</div>
+                <div class="review-question"></div>
+                ${question.code ? '<pre class="review-code"></pre>' : ''}
+                <div class="review-answer selected-answer"></div>
+                <div class="review-answer correct-answer"></div>
+                ${question.explanation ? '<div class="review-answer explanation-answer"></div>' : ''}
+            `;
+            item.querySelector('.review-question').innerText = cleanDisplayText(question.text);
+            const codeEl = item.querySelector('.review-code');
+            if (codeEl) codeEl.innerText = question.code;
+            item.querySelector('.selected-answer').innerText = 'Bạn chọn: ' + cleanDisplayText(selected);
+            item.querySelector('.correct-answer').innerText = 'Đáp án đúng: ' + cleanDisplayText(correct);
+            const explanationEl = item.querySelector('.explanation-answer');
+            if (explanationEl) explanationEl.innerText = 'Giải thích: ' + cleanDisplayText(question.explanation);
+            reviewList.appendChild(item);
+        });
+    }
+
+    function formatDateTime(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return 'Không rõ thời gian';
+        return date.toLocaleString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function formatDuration(totalSeconds) {
+        const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+        const minutes = Math.floor(safeSeconds / 60);
+        const seconds = safeSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
     // ===== UTILITIES =====
     function shuffleArray(arr) {
         const a = [...arr];
@@ -1044,6 +1175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (finalAiBasicStartBtn) finalAiBasicStartBtn.addEventListener('click', startBasicQuiz);
     if (finalAiBasicGenerateBtn) finalAiBasicGenerateBtn.addEventListener('click', startBasicQuiz);
     nextBtn.addEventListener('click', nextQuestion);
+    if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', clearQuizHistory);
     if (quizBackBtn) quizBackBtn.addEventListener('click', () => {
         saveQuizSession();
         localStorage.removeItem(ACTIVE_SESSION_KEY);
@@ -1060,6 +1192,8 @@ document.addEventListener('DOMContentLoaded', () => {
     buildTopicUI('final-topics-container', finalQuestions.length ? finalQuestions : topicQuestions, finalQuestions.length ? 'final' : 'topic');
     buildTopicUI('final-ai-topics-container', finalAiQuestions, 'final-ai');
     syncTabFromHash();
+    if (buildCodeEl) buildCodeEl.textContent = BUILD_CODE;
+    renderQuizHistory();
     const activeSessionKey = localStorage.getItem(ACTIVE_SESSION_KEY);
     if (activeSessionKey) restoreQuizSession(loadQuizSession(activeSessionKey));
 });

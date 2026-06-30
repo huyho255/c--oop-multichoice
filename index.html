@@ -297,17 +297,33 @@
                     <p>📋 <span id="wrong-review-count">0</span> câu sai sẽ được ưu tiên lần sau</p>
                 </div>
             </div>
+            <div class="result-panel">
+                <div class="result-panel-header">
+                    <h3>Lịch sử làm bài</h3>
+                    <button id="clear-history-btn" class="ghost-btn small-btn">Xóa lịch sử</button>
+                </div>
+                <div id="history-list" class="history-list"></div>
+            </div>
+            <div class="result-panel">
+                <div class="result-panel-header">
+                    <h3>Chi tiết câu đúng/sai</h3>
+                    <span id="review-summary" class="panel-note"></span>
+                </div>
+                <div id="review-list" class="review-list"></div>
+            </div>
             <div class="btn-group" id="result-buttons">
                 <!-- Buttons injected by JS based on quiz mode -->
             </div>
         </section>
     </main>
 
-    <script src="questions.js?v=parser-fix-20260630"></script>
-    <script src="topic_questions.js?v=parser-fix-20260630"></script>
-    <script src="midterm_questions.js?v=parser-fix-20260630"></script>
-    <script src="final_questions.js?v=parser-fix-20260630"></script>
-    <script src="final_ai_questions.js?v=parser-fix-20260630"></script>
-    <script src="script.js?v=parser-fix-20260630"></script>
+    <footer class="build-footer">Last update: <span id="build-code">loading</span></footer>
+
+    <script src="questions.js?v=history-review-20260630"></script>
+    <script src="topic_questions.js?v=history-review-20260630"></script>
+    <script src="midterm_questions.js?v=history-review-20260630"></script>
+    <script src="final_questions.js?v=history-review-20260630"></script>
+    <script src="final_ai_questions.js?v=history-review-20260630"></script>
+    <script src="script.js?v=history-review-20260630"></script>
 </body>
 </html>
