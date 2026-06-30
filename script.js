@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const BUILD_CODE = 'history-modal-20260630';
+    const BUILD_CODE = 'real-final-20260701';
 
     // ===== DOM ELEMENTS =====
     const tabNav = document.getElementById('tab-nav');
@@ -185,6 +185,42 @@ document.addEventListener('DOMContentLoaded', () => {
                   tags: ['Phát hiện lỗi', 'Syntax error', 'Ép kiểu'] },
             ]
         }
+    ];
+
+    const REAL_FINAL_CATEGORIES = [
+        {
+            id: 'real-exams', icon: '🏁',
+            title: '1. Đề tổng hợp cuối kỳ',
+            subtopics: [
+                { id: 'real-ck1', title: 'Đề CK 1', icon: '1️⃣',
+                  desc: '40 câu từ file ck1.',
+                  tags: ['Đề CK 1'] },
+                { id: 'real-ck2', title: 'Đề CK 2', icon: '2️⃣',
+                  desc: '40 câu từ file ck2.',
+                  tags: ['Đề CK 2'] },
+            ]
+        },
+        {
+            id: 'real-topics', icon: '📚',
+            title: '2. Chủ đề từ real quiz',
+            subtopics: [
+                { id: 'real-abstract', title: 'Abstract Class', icon: '🏛️',
+                  desc: '20 câu về lớp trừu tượng.',
+                  tags: ['Abstract Class'] },
+                { id: 'real-exception', title: 'Exception', icon: '⚠️',
+                  desc: '20 câu về xử lý ngoại lệ.',
+                  tags: ['Exception'] },
+                { id: 'real-inheritance-poly', title: 'Inheritance & Polymorphism', icon: '🧬',
+                  desc: '20 câu về kế thừa và đa hình.',
+                  tags: ['Inheritance & Polymorphism'] },
+                { id: 'real-interface', title: 'Interface', icon: '🔌',
+                  desc: '20 câu về interface.',
+                  tags: ['Real Interface'] },
+                { id: 'real-delegate-event', title: 'Delegate & Event', icon: '📣',
+                  desc: '20 câu về delegate và event.',
+                  tags: ['Delegate & Event'] },
+            ]
+        },
     ];
 
     // ===== QUESTION PARSER =====
@@ -385,12 +421,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ===== TOPIC SELECTION (TAB 2) =====
-    function buildTopicUI(containerId = 'topics-container', questionSource = topicQuestions, sourceName = 'topic') {
+    function buildTopicUI(containerId = 'topics-container', questionSource = topicQuestions, sourceName = 'topic', categories = TOPIC_CATEGORIES) {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
 
-        TOPIC_CATEGORIES.forEach(cat => {
+        categories.forEach(cat => {
             const catDiv = document.createElement('div');
             catDiv.className = 'topic-category';
 
@@ -1250,7 +1286,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSmartState();
     updateRoundUI();
     buildTopicUI();
-    buildTopicUI('final-topics-container', finalQuestions.length ? finalQuestions : topicQuestions, finalQuestions.length ? 'final' : 'topic');
+    buildTopicUI(
+        'final-topics-container',
+        finalQuestions.length ? finalQuestions : topicQuestions,
+        finalQuestions.length ? 'final' : 'topic',
+        finalQuestions.length ? REAL_FINAL_CATEGORIES : TOPIC_CATEGORIES
+    );
     buildTopicUI('final-ai-topics-container', finalAiQuestions, 'final-ai');
     syncTabFromHash();
     if (buildCodeEl) buildCodeEl.textContent = BUILD_CODE;
