@@ -180,7 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const questionBlocks = md.split(/^## Câu (?:sai )?\d+/m).slice(1);
         questionBlocks.forEach((block, idx) => {
             const lines = block.trim().split('\n');
-            let qText = '', qCode = '', topic = '', explanation = '';
+            let qCode = '', topic = '', explanation = '';
+            const qTextLines = [];
             let options = [], correctIndex = -1, inCodeBlock = false;
 
             lines.forEach(line => {
@@ -200,17 +201,82 @@ document.addEventListener('DOMContentLoaded', () => {
                     options[options.length - 1] += '\n' + line;
                     return;
                 }
-                if (t && !options.length) qText += line + ' ';
+                if (t && !options.length) qTextLines.push(line);
             });
 
-            if (qText && options.length > 0) {
+            const parsedQuestion = splitQuestionTextAndCode(qTextLines.join('\n'), qCode);
+
+            if (parsedQuestion.text && options.length > 0) {
                 questions.push({
-                    id: idx, text: qText.trim(), code: qCode.trim(),
+                    id: idx, text: parsedQuestion.text, code: parsedQuestion.code,
                     options, correct: correctIndex, explanation, topic
                 });
             }
         });
         return questions;
+    }
+
+    function splitQuestionTextAndCode(text, code) {
+        const normalizedText = String(text || '').replace(/\r\n/g, '\n').trim();
+        const normalizedCode = String(code || '').trim();
+        if (!normalizedText) return { text: '', code: normalizedCode };
+        if (normalizedCode) return { text: normalizedText, code: normalizedCode };
+
+        const lines = normalizedText.split('\n');
+        const codeStart = findLooseCodeStart(lines);
+        if (codeStart === -1) return { text: normalizedText, code: '' };
+
+        const questionLines = lines.slice(0, codeStart).filter(line => line.trim());
+        const codeLines = trimBlankLines(lines.slice(codeStart));
+        return {
+            text: questionLines.join('\n').trim(),
+            code: codeLines.join('\n').trim()
+        };
+    }
+
+    function findLooseCodeStart(lines) {
+        for (let i = 0; i < lines.length; i++) {
+            if (!looksLikeCSharpCodeStart(lines[i])) continue;
+            if (scoreCodeRun(lines.slice(i)) >= 2) return i;
+        }
+        return -1;
+    }
+
+    function looksLikeCSharpCodeStart(line) {
+        const t = line.trim();
+        if (!t) return false;
+        return /^(using|namespace|class|interface|struct|enum|try|catch|finally|if|else|for|foreach|while|switch)\b/.test(t)
+            || /^(public|private|protected|internal|static|sealed|abstract|virtual|override|readonly|const)\b/.test(t)
+            || /^(void|int|string|bool|double|float|decimal|char|var|object)\s+\w+/.test(t)
+            || /^Console\.(Write|WriteLine|ReadLine)\b/.test(t)
+            || /^[A-Z]\w*\s+\w+\s*=\s*new\b/.test(t)
+            || /^\w+\s*=\s*[^=]/.test(t);
+    }
+
+    function scoreCodeRun(lines) {
+        let score = 0;
+        let seenCode = false;
+        for (const line of lines) {
+            const t = line.trim();
+            if (!t) {
+                if (seenCode) score += 0.25;
+                continue;
+            }
+            if (/^[{}]$/.test(t) || /[;{}]$/.test(t) || looksLikeCSharpCodeStart(t)) {
+                score++;
+                seenCode = true;
+                continue;
+            }
+            if (seenCode && /^[A-Za-z_]\w*\s*\(.*\)/.test(t)) score++;
+        }
+        return score;
+    }
+
+    function trimBlankLines(lines) {
+        const copy = [...lines];
+        while (copy.length && !copy[0].trim()) copy.shift();
+        while (copy.length && !copy[copy.length - 1].trim()) copy.pop();
+        return copy;
     }
 
     function loadQuestions() {
